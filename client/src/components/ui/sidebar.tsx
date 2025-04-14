@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 export function Sidebar() {
   const [location] = useLocation();
   const isMobile = useMobile();
+  const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 
   // Close sidebar on mobile when location changes
@@ -36,6 +37,11 @@ export function Sidebar() {
   }, [isMobile]);
 
   const sidebarItems = [
+    {
+      name: "Home",
+      path: "/",
+      icon: <Home className="h-6 w-6" />,
+    },
     {
       name: "Tasks",
       path: "/tasks",
@@ -62,7 +68,7 @@ export function Sidebar() {
     },
   ];
 
-  const activePath = location === "/" ? "/tasks" : location;
+  const activePath = location;
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
@@ -79,16 +85,26 @@ export function Sidebar() {
       <Button
         variant="outline"
         size="icon"
-        className="fixed top-4 left-4 z-50 bg-white shadow-md"
+        className="fixed top-4 left-4 z-50 bg-white dark:bg-gray-800 dark:border-gray-700 shadow-md"
         onClick={toggleSidebar}
       >
         {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </Button>
 
+      {/* Theme toggle button */}
+      <Button
+        variant="outline"
+        size="icon"
+        className="fixed top-4 right-4 z-50 bg-white dark:bg-gray-800 dark:border-gray-700 shadow-md"
+        onClick={toggleTheme}
+      >
+        {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+      </Button>
+
       {/* Sidebar */}
       <div
         className={cn(
-          "md:w-64 bg-white border-r border-gray-200 flex flex-col z-40",
+          "md:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col z-40",
           "transition-all duration-300 ease-in-out shadow-lg",
           "fixed inset-y-0 left-0",
           !isOpen && "-translate-x-full"
@@ -97,44 +113,56 @@ export function Sidebar() {
         {/* Logo and Navigation */}
         <div className="flex flex-col h-full">
           <div className="p-4 flex items-center justify-center md:justify-start">
-            <span className="hidden lg:block text-primary font-bold text-xl">ProductivityCanvas</span>
-            <span className="block md:block lg:hidden text-primary font-bold text-xl">PC</span>
+            <span className="hidden lg:block text-primary font-bold text-xl dark:text-white">ProductivityCanvas</span>
+            <span className="block md:block lg:hidden text-primary font-bold text-xl dark:text-white">PC</span>
           </div>
 
           <nav className="flex flex-col w-full mt-4">
-            <h2 className="px-4 py-2 text-sm font-semibold uppercase text-gray-500">Navigation Menu</h2>
+            <h2 className="px-4 py-2 text-sm font-semibold uppercase text-gray-500 dark:text-gray-400">Navigation Menu</h2>
             {sidebarItems.map((item) => (
               <Link key={item.path} href={item.path}>
                 <div
                   className={cn(
-                    "flex items-center p-4 w-full text-left hover:bg-gray-100 transition-colors",
+                    "flex items-center p-4 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors",
                     "border-l-[3px]",
                     activePath === item.path
-                      ? "border-primary bg-opacity-10 bg-primary"
+                      ? "border-primary bg-opacity-10 bg-primary dark:border-primary"
                       : "border-transparent"
                   )}
                 >
                   {item.icon}
-                  <span className="ml-3 block">{item.name}</span>
+                  <span className="ml-3 block dark:text-gray-200">{item.name}</span>
                 </div>
               </Link>
             ))}
             <div className="px-4 py-2 mt-4">
-              <div className="bg-gray-100 rounded-md p-3 text-sm">
-                <p className="font-medium">Tip: Click on any option to navigate</p>
+              <div className="bg-gray-100 dark:bg-gray-700 rounded-md p-3 text-sm">
+                <p className="font-medium dark:text-gray-300">Tip: Click on any option to navigate</p>
               </div>
             </div>
           </nav>
 
+          {/* Theme toggle */}
+          <div className="p-4">
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center justify-between dark:border-gray-700 dark:text-gray-300"
+              onClick={toggleTheme}
+            >
+              <span>Theme: {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
+              {theme === 'dark' ? <Sun className="h-4 w-4 ml-2" /> : <Moon className="h-4 w-4 ml-2" />}
+            </Button>
+          </div>
+
           {/* User Profile */}
-          <div className="p-4 mt-auto border-t border-gray-200">
+          <div className="p-4 mt-auto border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
                 <User className="h-4 w-4" />
               </div>
               <div className="ml-3 hidden lg:block">
-                <p className="text-sm font-medium">User</p>
-                <p className="text-xs text-secondary">user@example.com</p>
+                <p className="text-sm font-medium dark:text-gray-200">User</p>
+                <p className="text-xs text-secondary dark:text-gray-400">user@example.com</p>
               </div>
             </div>
           </div>

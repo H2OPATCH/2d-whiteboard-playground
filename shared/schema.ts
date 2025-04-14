@@ -22,12 +22,15 @@ export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   text: text("text").notNull(),
   completed: boolean("completed").notNull().default(false),
+  priority: text("priority").default("medium"), // 'high', 'medium', 'low'
+  createdAt: timestamp("created_at").notNull().defaultNow(),
   userId: integer("user_id").references(() => users.id),
 });
 
 export const insertTaskSchema = createInsertSchema(tasks).pick({
   text: true,
   completed: true,
+  priority: true,
   userId: true,
 });
 
