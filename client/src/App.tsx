@@ -6,6 +6,8 @@ import NotFound from "@/pages/not-found";
 import TasksPage from "@/pages/TasksPage";
 import NotesPage from "@/pages/NotesPage";
 import CanvasPage from "@/pages/CanvasPage";
+import PlaygroundPage from "@/pages/PlaygroundPage";
+import PlaygroundCanvasPage from "@/pages/PlaygroundCanvasPage";
 import { Sidebar } from "@/components/ui/sidebar";
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
             <Route path="/tasks" component={TasksPage} />
             <Route path="/notes" component={NotesPage} />
             <Route path="/canvas" component={CanvasPage} />
+            <Route path="/playground" component={PlaygroundPage} />
+            <Route path="/playground/:id" component={PlaygroundCanvasPage} />
             <Route component={NotFound} />
           </Switch>
         </div>

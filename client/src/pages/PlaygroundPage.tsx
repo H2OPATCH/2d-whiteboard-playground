@@ -1,256 +1,264 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { Playground } from "@shared/schema";
+import { useLocation } from "wouter";
+import { Playground, InsertPlayground } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useMobile } from "@/hooks/use-mobile";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Loader2, Plus, Edit, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { formatRelativeDate } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { formatRelativeDate } from "@/lib/utils";
 
 export default function PlaygroundPage() {
-  const [selectedPlayground, setSelectedPlayground] = useState<Playground | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newPlaygroundName, setNewPlaygroundName] = useState("");
-  const [newPlaygroundDescription, setNewPlaygroundDescription] = useState("");
-  const { toast } = useToast();
-  const isMobile = useMobile();
+  const [, setLocation] = useLocation();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentPlayground, setCurrentPlayground] = useState<Playground | null>(null);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   
-  // Fetch playgrounds
-  const { 
-    data: playgrounds = [], 
+  const { toast } = useToast();
+
+  // Get all playgrounds
+  const {
+    data: playgrounds = [],
     isLoading,
-    isError 
-  } = useQuery<Playground[]>({ 
-    queryKey: ['/api/playgrounds'] 
+    refetch
+  } = useQuery({
+    queryKey: ["/api/playgrounds"],
+    refetchOnWindowFocus: false
   });
 
-  // Create playground mutation
-  const createPlaygroundMutation = useMutation({
-    mutationFn: (playgroundData: { name: string; description: string }) => 
-      apiRequest('POST', '/api/playgrounds', playgroundData),
+  // Create a new playground
+  const { mutate: createPlayground, isPending: isCreating } = useMutation({
+    mutationFn: (playgroundData: InsertPlayground) => 
+      apiRequest("/api/playgrounds", { method: "POST", body: playgroundData }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/playgrounds'] });
-      toast({
-        title: "Playground created",
-        description: "Your playground has been created successfully."
-      });
-      setIsCreateDialogOpen(false);
-      setNewPlaygroundName("");
-      setNewPlaygroundDescription("");
+      toast({ title: "Success", description: "Playground created successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/playgrounds"] });
+      resetForm();
     },
-    onError: () => {
-      toast({
-        title: "Failed to create playground",
-        description: "There was an error creating your playground. Please try again.",
-        variant: "destructive"
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: "Failed to create playground", 
+        variant: "destructive" 
       });
     }
   });
 
-  // Delete playground mutation
-  const deletePlaygroundMutation = useMutation({
+  // Update a playground
+  const { mutate: updatePlayground, isPending: isUpdating } = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<InsertPlayground> }) => 
+      apiRequest(`/api/playgrounds/${id}`, { method: "PATCH", body: data }),
+    onSuccess: () => {
+      toast({ title: "Success", description: "Playground updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/playgrounds"] });
+      resetForm();
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: "Failed to update playground", 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  // Delete a playground
+  const { mutate: deletePlayground, isPending: isDeleting } = useMutation({
     mutationFn: (id: number) => 
-      apiRequest('DELETE', `/api/playgrounds/${id}`),
+      apiRequest(`/api/playgrounds/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/playgrounds'] });
-      setSelectedPlayground(null);
-      toast({
-        title: "Playground deleted",
-        description: "Your playground has been deleted successfully."
-      });
+      toast({ title: "Success", description: "Playground deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/playgrounds"] });
     },
-    onError: () => {
-      toast({
-        title: "Failed to delete playground",
-        description: "There was an error deleting your playground. Please try again.",
-        variant: "destructive"
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete playground", 
+        variant: "destructive" 
       });
     }
   });
 
-  const handleCreatePlayground = () => {
-    if (!newPlaygroundName.trim()) {
-      toast({
-        title: "Name required",
-        description: "Please enter a name for your playground.",
-        variant: "destructive"
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const playgroundData = {
+      name,
+      description: description || null
+    };
+
+    if (isEditing && currentPlayground) {
+      updatePlayground({ 
+        id: currentPlayground.id, 
+        data: playgroundData 
       });
-      return;
-    }
-
-    createPlaygroundMutation.mutate({
-      name: newPlaygroundName,
-      description: newPlaygroundDescription
-    });
-  };
-
-  const handleDeletePlayground = (id: number) => {
-    if (confirm("Are you sure you want to delete this playground? All items inside will also be deleted.")) {
-      deletePlaygroundMutation.mutate(id);
+    } else {
+      createPlayground(playgroundData);
     }
   };
 
-  const handleSelectPlayground = (playground: Playground) => {
-    setSelectedPlayground(playground);
+  const handleEdit = (playground: Playground) => {
+    setCurrentPlayground(playground);
+    setName(playground.name);
+    setDescription(playground.description || "");
+    setIsEditing(true);
+    setDialogOpen(true);
   };
 
-  if (isError) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-accent">Error loading playgrounds. Please try again later.</p>
-      </div>
-    );
-  }
-
-  // When a playground is selected, redirect to the playground canvas
-  useEffect(() => {
-    if (selectedPlayground) {
-      window.location.href = `/playground/${selectedPlayground.id}`;
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this playground?")) {
+      deletePlayground(id);
     }
-  }, [selectedPlayground]);
+  };
+
+  const resetForm = () => {
+    setName("");
+    setDescription("");
+    setCurrentPlayground(null);
+    setIsEditing(false);
+    setDialogOpen(false);
+  };
+
+  const openPlayground = (id: number) => {
+    setLocation(`/playground/${id}`);
+  };
 
   return (
-    <div className="h-full flex flex-col">
-      <header className="bg-white border-b border-gray-200 p-4">
-        <h1 className="text-2xl font-semibold">Playgrounds</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Create and manage your creative whiteboarding workspaces
-        </p>
-      </header>
-      
-      <div className="flex-1 overflow-auto p-4">
-        <div className="max-w-3xl mx-auto">
-          {/* Create New Playground Button */}
-          <Button
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="w-full bg-white rounded-lg p-4 shadow mb-6 text-left border-2 border-dashed border-gray-300 hover:border-primary transition-colors h-auto justify-start"
-            variant="ghost"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Create a new playground
-          </Button>
-
-          {/* Playgrounds Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {isLoading ? (
-              // Loading skeleton
-              Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="bg-white rounded-lg p-6 shadow">
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-full mb-3" />
-                  <Skeleton className="h-3 w-28" />
-                </div>
-              ))
-            ) : playgrounds.length === 0 ? (
-              <div className="bg-white rounded-lg p-6 shadow text-center text-gray-500 col-span-2">
-                <p>No playgrounds yet. Create a playground to get started!</p>
-              </div>
-            ) : (
-              playgrounds.map((playground) => (
-                <div
-                  key={playground.id}
-                  className="bg-white rounded-lg p-6 shadow cursor-pointer hover:shadow-md transition-shadow relative group"
-                  onClick={() => handleSelectPlayground(playground)}
-                >
-                  <h3 className="font-semibold text-lg mb-2">{playground.name}</h3>
-                  {playground.description && (
-                    <p className="text-sm text-gray-700 mb-3 line-clamp-2">
-                      {playground.description}
-                    </p>
-                  )}
-                  <div className="text-xs text-secondary">
-                    Updated {formatRelativeDate(playground.updatedAt)}
-                  </div>
-                  
-                  {/* Delete button (only shows on hover) */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-accent"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeletePlayground(playground.id);
-                    }}
-                    disabled={deletePlaygroundMutation.isPending}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 6h18"></path>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      <line x1="10" y1="11" x2="10" y2="17"></line>
-                      <line x1="14" y1="11" x2="14" y2="17"></line>
-                    </svg>
-                  </Button>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Mobile FAB */}
-        {isMobile && (
-          <div className="fixed bottom-6 right-6">
-            <Button
-              onClick={() => setIsCreateDialogOpen(true)}
-              className="w-14 h-14 rounded-full shadow-lg"
-              style={{ backgroundColor: '#EF233C' }}
-            >
-              <Plus className="h-6 w-6" />
+    <div className="h-full flex flex-col p-4 md:p-6 overflow-auto bg-gray-50">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Playgrounds</h1>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center">
+              <Plus className="mr-2 h-4 w-4" />
+              New Playground
             </Button>
-          </div>
-        )}
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{isEditing ? "Edit Playground" : "Create New Playground"}</DialogTitle>
+              <DialogDescription>
+                {isEditing 
+                  ? "Update your playground details below." 
+                  : "Add a new playground to organize your creative ideas."}
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input 
+                    id="name"
+                    placeholder="Playground name" 
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (optional)</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Brief description of this playground"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              </div>
+              <DialogFooter className="mt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={resetForm}
+                  disabled={isCreating || isUpdating}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={isCreating || isUpdating || !name.trim()} 
+                  className="ml-2"
+                >
+                  {(isCreating || isUpdating) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isEditing ? "Update" : "Create"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Create Playground Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Playground</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                placeholder="My Whiteboard Playground"
-                value={newPlaygroundName}
-                onChange={(e) => setNewPlaygroundName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (optional)</Label>
-              <Textarea
-                id="description"
-                placeholder="Write a description of your playground..."
-                value={newPlaygroundDescription}
-                onChange={(e) => setNewPlaygroundDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="ghost" 
-              onClick={() => setIsCreateDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleCreatePlayground}
-              disabled={createPlaygroundMutation.isPending || !newPlaygroundName.trim()}
-            >
-              Create
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : playgrounds.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-md shadow">
+          <h3 className="text-lg font-medium mb-2">No playgrounds yet</h3>
+          <p className="text-gray-500 mb-6">Create your first playground to get started!</p>
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Playground
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {playgrounds.map((playground) => (
+            <Card key={playground.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex justify-between items-start">
+                  <span className="truncate">{playground.name}</span>
+                </CardTitle>
+                <CardDescription>
+                  {formatRelativeDate(playground.updatedAt)}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 line-clamp-3">
+                  {playground.description || "No description"}
+                </p>
+              </CardContent>
+              <CardFooter className="flex justify-between pt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => openPlayground(playground.id)}
+                >
+                  Open
+                </Button>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => handleEdit(playground)}
+                    disabled={isDeleting}
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span className="sr-only">Edit</span>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handleDelete(playground.id)}
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4 text-accent" />
+                    <span className="sr-only">Delete</span>
+                  </Button>
+                </div>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
