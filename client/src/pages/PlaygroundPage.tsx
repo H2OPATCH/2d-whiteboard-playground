@@ -25,18 +25,23 @@ export default function PlaygroundPage() {
 
   // Get all playgrounds
   const {
-    data: playgrounds = [],
+    data: playgrounds = [] as Playground[],
     isLoading,
     refetch
-  } = useQuery({
+  } = useQuery<Playground[]>({
     queryKey: ["/api/playgrounds"],
     refetchOnWindowFocus: false
   });
 
   // Create a new playground
   const { mutate: createPlayground, isPending: isCreating } = useMutation({
-    mutationFn: (playgroundData: InsertPlayground) => 
-      apiRequest("/api/playgrounds", { method: "POST", body: playgroundData }),
+    mutationFn: async (playgroundData: InsertPlayground) => {
+      const response = await apiRequest("/api/playgrounds", { 
+        method: "POST", 
+        body: playgroundData 
+      });
+      return response as Playground;
+    },
     onSuccess: () => {
       toast({ title: "Success", description: "Playground created successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/playgrounds"] });
@@ -53,8 +58,13 @@ export default function PlaygroundPage() {
 
   // Update a playground
   const { mutate: updatePlayground, isPending: isUpdating } = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<InsertPlayground> }) => 
-      apiRequest(`/api/playgrounds/${id}`, { method: "PATCH", body: data }),
+    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertPlayground> }) => {
+      const response = await apiRequest(`/api/playgrounds/${id}`, { 
+        method: "PATCH", 
+        body: data 
+      });
+      return response as Playground;
+    },
     onSuccess: () => {
       toast({ title: "Success", description: "Playground updated successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/playgrounds"] });
@@ -71,8 +81,10 @@ export default function PlaygroundPage() {
 
   // Delete a playground
   const { mutate: deletePlayground, isPending: isDeleting } = useMutation({
-    mutationFn: (id: number) => 
-      apiRequest(`/api/playgrounds/${id}`, { method: "DELETE" }),
+    mutationFn: async (id: number) => {
+      const response = await apiRequest(`/api/playgrounds/${id}`, { method: "DELETE" });
+      return response as boolean;
+    },
     onSuccess: () => {
       toast({ title: "Success", description: "Playground deleted successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/playgrounds"] });

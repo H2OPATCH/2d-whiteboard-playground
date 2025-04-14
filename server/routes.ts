@@ -331,9 +331,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/playground-items", async (req, res) => {
+  app.post("/api/playgrounds/:playgroundId/items", async (req, res) => {
     try {
-      const itemData = insertPlaygroundItemSchema.parse(req.body);
+      const playgroundId = parseInt(req.params.playgroundId);
+      const itemData = insertPlaygroundItemSchema.parse({
+        ...req.body,
+        playgroundId
+      });
       const item = await storage.createPlaygroundItem(itemData);
       res.status(201).json(item);
     } catch (error) {
@@ -344,7 +348,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/playground-items/:id", async (req, res) => {
+  app.patch("/api/playgrounds/:playgroundId/items/:id", async (req, res) => {
     try {
       const itemId = parseInt(req.params.id);
       const itemData = insertPlaygroundItemSchema.partial().parse(req.body);
@@ -364,7 +368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/playground-items/:id", async (req, res) => {
+  app.delete("/api/playgrounds/:playgroundId/items/:id", async (req, res) => {
     try {
       const itemId = parseInt(req.params.id);
       const success = await storage.deletePlaygroundItem(itemId);
