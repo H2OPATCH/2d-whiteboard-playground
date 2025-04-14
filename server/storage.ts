@@ -118,6 +118,8 @@ export class MemStorage implements IStorage {
       ...insertTask, 
       id,
       completed: insertTask.completed ?? false,
+      priority: insertTask.priority ?? "medium",
+      createdAt: new Date(),
       userId: insertTask.userId ?? null
     };
     this.tasks.set(id, task);
@@ -158,6 +160,7 @@ export class MemStorage implements IStorage {
       userId: insertNote.userId ?? null,
       richContent: insertNote.richContent ?? null,
       attachments: insertNote.attachments ?? null,
+      priority: insertNote.priority ?? "medium",
       updatedAt: new Date() 
     };
     this.notes.set(id, note);

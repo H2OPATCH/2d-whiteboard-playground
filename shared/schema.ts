@@ -44,6 +44,7 @@ export const notes = pgTable("notes", {
   content: text("content").notNull(),
   richContent: jsonb("rich_content"), // For rich text content
   attachments: jsonb("attachments"), // For media attachments
+  priority: text("priority").default("medium"), // 'high', 'medium', 'low'
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   userId: integer("user_id").references(() => users.id),
 });
@@ -53,6 +54,7 @@ export const insertNoteSchema = createInsertSchema(notes).pick({
   content: true,
   richContent: true,
   attachments: true,
+  priority: true,
   userId: true,
 });
 
