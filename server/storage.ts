@@ -249,7 +249,8 @@ export class MemStorage implements IStorage {
       id,
       userId: insertPlayground.userId ?? null,
       description: insertPlayground.description ?? null,
-      updatedAt: new Date() 
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
     this.playgrounds.set(id, playground);
     return playground;
@@ -270,12 +271,10 @@ export class MemStorage implements IStorage {
 
   async deletePlayground(id: number): Promise<boolean> {
     // Delete all items associated with this playground
-    const itemsToDelete = Array.from(this.playgroundItems.values())
+    const items = Array.from(this.playgroundItems.values())
       .filter(item => item.playgroundId === id);
     
-    for (const item of itemsToDelete) {
-      this.playgroundItems.delete(item.id);
-    }
+    items.forEach(item => this.playgroundItems.delete(item.id));
     
     return this.playgrounds.delete(id);
   }
@@ -298,17 +297,15 @@ export class MemStorage implements IStorage {
   async createPlaygroundItem(insertItem: InsertPlaygroundItem): Promise<PlaygroundItem> {
     const id = this.playgroundItemId++;
     const item: PlaygroundItem = { 
-      ...insertItem, 
+      ...insertItem,
       id,
       userId: insertItem.userId ?? null,
-      content: insertItem.content ?? null,
-      richContent: insertItem.richContent ?? null,
-      width: insertItem.width ?? null,
-      height: insertItem.height ?? null,
-      style: insertItem.style ?? null,
-      connectionData: insertItem.connectionData ?? null,
-      mediaUrl: insertItem.mediaUrl ?? null,
-      mediaType: insertItem.mediaType ?? null
+      title: insertItem.title ?? '',
+      type: insertItem.type ?? 'code',
+      content: insertItem.content ?? '',
+      language: insertItem.language ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
     this.playgroundItems.set(id, item);
     return item;
@@ -318,7 +315,11 @@ export class MemStorage implements IStorage {
     const item = this.playgroundItems.get(id);
     if (!item) return undefined;
 
-    const updatedItem = { ...item, ...partialItem };
+    const updatedItem = { 
+      ...item, 
+      ...partialItem,
+      updatedAt: new Date()
+    };
     this.playgroundItems.set(id, updatedItem);
     return updatedItem;
   }

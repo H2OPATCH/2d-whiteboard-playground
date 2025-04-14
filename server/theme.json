@@ -1,0 +1,19 @@
+{
+  "primary": "#000000",
+  "secondary": "#ffffff",
+  "background": "#ffffff",
+  "foreground": "#000000",
+  "muted": "#f1f5f9",
+  "mutedForeground": "#64748b",
+  "popover": "#ffffff",
+  "popoverForeground": "#020817",
+  "card": "#ffffff",
+  "cardForeground": "#020817",
+  "border": "#e2e8f0",
+  "input": "#e2e8f0",
+  "accent": "#f1f5f9",
+  "accentForeground": "#0f172a",
+  "destructive": "#ef4444",
+  "destructiveForeground": "#f8fafc",
+  "ring": "#94a3b8"
+} 

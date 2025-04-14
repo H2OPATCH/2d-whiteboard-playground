@@ -101,6 +101,7 @@ export const playgrounds = pgTable("playgrounds", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   userId: integer("user_id").references(() => users.id),
 });
@@ -118,35 +119,29 @@ export type Playground = typeof playgrounds.$inferSelect;
 export const playgroundItems = pgTable("playground_items", {
   id: serial("id").primaryKey(),
   playgroundId: integer("playground_id").references(() => playgrounds.id).notNull(),
-  type: text("type").notNull(), // 'text', 'sticky', 'shape', 'image', 'media', 'connector', 'flowchart'
-  content: text("content"),
-  richContent: jsonb("rich_content"), // For rich text items
-  positionX: integer("position_x").notNull(),
-  positionY: integer("position_y").notNull(),
-  width: integer("width"),
-  height: integer("height"),
-  style: jsonb("style"), // For styling information
-  connectionData: jsonb("connection_data"), // For flowcharts and connections
-  mediaUrl: text("media_url"), // For embedded media
-  mediaType: text("media_type"), // Type of media (image, video, pdf, etc.)
+  title: text("title").notNull(),
+  type: text("type").notNull(), // 'code' or 'markdown'
+  content: text("content").notNull(),
+  language: text("language"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
   userId: integer("user_id").references(() => users.id),
 });
 
-export const insertPlaygroundItemSchema = createInsertSchema(playgroundItems).pick({
-  playgroundId: true,
-  type: true,
-  content: true,
-  richContent: true,
-  positionX: true,
-  positionY: true,
-  width: true,
-  height: true,
-  style: true,
-  connectionData: true,
-  mediaUrl: true,
-  mediaType: true,
-  userId: true,
-});
+export const insertPlaygroundItemSchema = createInsertSchema(playgroundItems)
+  .pick({
+    playgroundId: true,
+    title: true,
+    type: true,
+    content: true,
+    language: true,
+    userId: true,
+  })
+  .extend({
+    content: z.string().optional(),
+    language: z.string().nullable().optional(),
+    userId: z.number().nullable().optional(),
+  });
 
 export type InsertPlaygroundItem = z.infer<typeof insertPlaygroundItemSchema>;
 export type PlaygroundItem = typeof playgroundItems.$inferSelect;

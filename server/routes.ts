@@ -242,6 +242,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/playgrounds", async (req, res) => {
+    try {
+      const playgroundData = insertPlaygroundSchema.parse(req.body);
+      const playground = await storage.createPlayground(playgroundData);
+      res.status(201).json(playground);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid playground data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create playground" });
+    }
+  });
+
   app.get("/api/playgrounds/:id", async (req, res) => {
     try {
       const playgroundId = parseInt(req.params.id);
@@ -254,19 +267,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(playground);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch playground" });
-    }
-  });
-
-  app.post("/api/playgrounds", async (req, res) => {
-    try {
-      const playgroundData = insertPlaygroundSchema.parse(req.body);
-      const playground = await storage.createPlayground(playgroundData);
-      res.status(201).json(playground);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid playground data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create playground" });
     }
   });
 
@@ -306,9 +306,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Playground Item Routes
-  app.get("/api/playgrounds/:playgroundId/items", async (req, res) => {
+  app.get("/api/playgrounds/:id/items", async (req, res) => {
     try {
-      const playgroundId = parseInt(req.params.playgroundId);
+      const playgroundId = parseInt(req.params.id);
       const items = await storage.getPlaygroundItems(playgroundId);
       res.json(items);
     } catch (error) {
@@ -316,9 +316,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/playground-items/:id", async (req, res) => {
+  app.get("/api/playgrounds/:id/items/:itemId", async (req, res) => {
     try {
-      const itemId = parseInt(req.params.id);
+      const itemId = parseInt(req.params.itemId);
       const item = await storage.getPlaygroundItem(itemId);
       
       if (!item) {
@@ -331,9 +331,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/playgrounds/:playgroundId/items", async (req, res) => {
+  app.post("/api/playgrounds/:id/items", async (req, res) => {
     try {
-      const playgroundId = parseInt(req.params.playgroundId);
+      const playgroundId = parseInt(req.params.id);
       const itemData = insertPlaygroundItemSchema.parse({
         ...req.body,
         playgroundId
@@ -348,9 +348,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/playgrounds/:playgroundId/items/:id", async (req, res) => {
+  app.patch("/api/playgrounds/:id/items/:itemId", async (req, res) => {
     try {
-      const itemId = parseInt(req.params.id);
+      const itemId = parseInt(req.params.itemId);
       const itemData = insertPlaygroundItemSchema.partial().parse(req.body);
       
       const updatedItem = await storage.updatePlaygroundItem(itemId, itemData);
@@ -368,9 +368,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/playgrounds/:playgroundId/items/:id", async (req, res) => {
+  app.delete("/api/playgrounds/:id/items/:itemId", async (req, res) => {
     try {
-      const itemId = parseInt(req.params.id);
+      const itemId = parseInt(req.params.itemId);
       const success = await storage.deletePlaygroundItem(itemId);
       
       if (!success) {

@@ -44,12 +44,12 @@ export default function PlaygroundCanvasPage() {
   // Refs
   const canvasRef = useRef<HTMLDivElement>(null);
   
-  // Fetch playground data
+  // Fetch playground data with proper typing
   const { 
     data: playground,
     isLoading: isLoadingPlayground,
     isError: isPlaygroundError
-  } = useQuery({
+  } = useQuery<Playground>({
     queryKey: [`/api/playgrounds/${id}`],
     retry: false,
     enabled: !!id,
@@ -63,7 +63,7 @@ export default function PlaygroundCanvasPage() {
     data: items = [],
     isLoading: isLoadingItems,
     isError: isItemsError
-  } = useQuery({
+  } = useQuery<PlaygroundItem[]>({
     queryKey: [`/api/playgrounds/${id}/items`],
     retry: false,
     enabled: !!id,
@@ -75,12 +75,19 @@ export default function PlaygroundCanvasPage() {
   // Create item mutation
   const { mutate: createItem, isPending: isCreatingItem } = useMutation({
     mutationFn: (item: InsertPlaygroundItem) => 
-      apiRequest(`/api/playgrounds/${id}/items`, { method: "POST", body: item }),
+      apiRequest('POST', `/api/playgrounds/${id}/items`, {
+        ...item,
+        positionX: Math.round(item.positionX),
+        positionY: Math.round(item.positionY),
+        width: item.width ? Math.round(item.width) : null,
+        height: item.height ? Math.round(item.height) : null
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/playgrounds/${id}/items`] });
       toast({ title: "Success", description: "Item added to canvas" });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error creating item:', error);
       toast({ 
         title: "Error", 
         description: "Failed to add item to canvas", 
@@ -92,7 +99,7 @@ export default function PlaygroundCanvasPage() {
   // Update item mutation
   const { mutate: updateItem, isPending: isUpdatingItem } = useMutation({
     mutationFn: ({ itemId, updates }: { itemId: number, updates: Partial<InsertPlaygroundItem> }) =>
-      apiRequest(`/api/playgrounds/${id}/items/${itemId}`, { method: "PATCH", body: updates }),
+      apiRequest('PATCH', `/api/playgrounds/${id}/items/${itemId}`, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/playgrounds/${id}/items`] });
     },
@@ -108,7 +115,7 @@ export default function PlaygroundCanvasPage() {
   // Delete item mutation
   const { mutate: deleteItem, isPending: isDeletingItem } = useMutation({
     mutationFn: (itemId: number) =>
-      apiRequest(`/api/playgrounds/${id}/items/${itemId}`, { method: "DELETE" }),
+      apiRequest('DELETE', `/api/playgrounds/${id}/items/${itemId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/playgrounds/${id}/items`] });
       toast({ title: "Success", description: "Item deleted" });
@@ -125,7 +132,7 @@ export default function PlaygroundCanvasPage() {
   // Update playground mutation
   const { mutate: updatePlayground, isPending: isUpdatingPlayground } = useMutation({
     mutationFn: (updates: Partial<Playground>) =>
-      apiRequest(`/api/playgrounds/${id}`, { method: "PATCH", body: updates }),
+      apiRequest('PATCH', `/api/playgrounds/${id}`, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/playgrounds/${id}`] });
       setIsEditing(false);
@@ -156,8 +163,8 @@ export default function PlaygroundCanvasPage() {
     if ((e.target as HTMLElement).closest('.playground-item')) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / scale;
-    const y = (e.clientY - rect.top) / scale;
+    const x = Math.round((e.clientX - rect.left) / scale);
+    const y = Math.round((e.clientY - rect.top) / scale);
     
     // Default item properties
     let item: InsertPlaygroundItem = {
@@ -205,8 +212,12 @@ export default function PlaygroundCanvasPage() {
         return 200;
       case 'shape':
         return 100;
+      case 'image':
+      case 'video':
+      case 'pdf':
+        return 300;
       case 'flowchart':
-        return 200;
+        return 150;
       default:
         return null;
     }
@@ -216,13 +227,17 @@ export default function PlaygroundCanvasPage() {
   const getDefaultHeight = (type: string): number | null => {
     switch (type) {
       case 'text':
-        return null;
+        return null; // Auto height for text
       case 'sticky':
         return 200;
       case 'shape':
         return 100;
+      case 'image':
+      case 'video':
+      case 'pdf':
+        return 200;
       case 'flowchart':
-        return 80;
+        return 100;
       default:
         return null;
     }
@@ -335,20 +350,20 @@ export default function PlaygroundCanvasPage() {
   }
   
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden bg-white dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 py-2 px-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-2 px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" onClick={handleBack}>
+            <Button variant="ghost" size="sm" onClick={handleBack} className="text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700">
               <ChevronLeft className="h-4 w-4 mr-1" />
-              Back
+              <span>Back</span>
             </Button>
             
             {isEditing ? (
               <div className="flex items-center space-x-2">
                 <Input
-                  className="w-60 h-8"
+                  className="w-60 h-8 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                   value={playgroundName}
                   onChange={(e) => setPlaygroundName(e.target.value)}
                   placeholder="Playground name"
@@ -358,27 +373,30 @@ export default function PlaygroundCanvasPage() {
                   variant="ghost" 
                   onClick={handleSaveDetails}
                   disabled={!playgroundName.trim() || isUpdatingPlayground}
+                  className="text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
                 >
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-4 w-4" />
                 </Button>
                 <Button 
                   size="icon" 
                   variant="ghost" 
                   onClick={handleCancelEdit}
                   disabled={isUpdatingPlayground}
+                  className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
-                  <X className="h-4 w-4 text-accent" />
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <h1 className="text-lg font-semibold">
+                <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   {playground?.name}
                 </h1>
                 <Button 
                   size="icon" 
                   variant="ghost" 
                   onClick={() => setIsEditing(true)}
+                  className="text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -387,11 +405,23 @@ export default function PlaygroundCanvasPage() {
           </div>
           
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={handleZoomOut} disabled={scale <= 0.5}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleZoomOut} 
+              disabled={scale <= 0.5}
+              className="text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
               <ZoomOut className="h-4 w-4" />
             </Button>
-            <span className="text-sm">{Math.round(scale * 100)}%</span>
-            <Button variant="outline" size="sm" onClick={handleZoomIn} disabled={scale >= 2}>
+            <span className="text-sm text-gray-900 dark:text-gray-100">{Math.round(scale * 100)}%</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleZoomIn} 
+              disabled={scale >= 2}
+              className="text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
               <ZoomIn className="h-4 w-4" />
             </Button>
           </div>
@@ -406,14 +436,14 @@ export default function PlaygroundCanvasPage() {
               value={playgroundDescription}
               onChange={(e) => setPlaygroundDescription(e.target.value)}
               placeholder="Description (optional)"
-              className="h-8"
+              className="h-8 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
             />
           </div>
         )}
         
         {/* Description display when not editing */}
         {!isEditing && playground?.description && (
-          <p className="text-sm text-muted-foreground mt-1 px-12">
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 px-12">
             {playground.description}
           </p>
         )}
@@ -423,34 +453,40 @@ export default function PlaygroundCanvasPage() {
       <PlaygroundToolbar activeTool={activeTool} onSelectTool={setActiveTool} />
       
       {/* Canvas */}
-      <div className="flex-1 overflow-auto relative bg-gray-100" onClick={handleCanvasClick}>
+      <div className="flex-1 overflow-auto relative bg-gray-100 dark:bg-gray-800" onClick={handleCanvasClick}>
         <div 
           ref={canvasRef}
-          className="h-[2000px] w-[2000px] absolute top-0 left-0 transform-gpu"
+          className="absolute top-0 left-0 transform-gpu"
           style={{
             backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px)',
             backgroundSize: `${20 * scale}px ${20 * scale}px`,
             transform: `scale(${scale})`,
-            transformOrigin: '0 0'
+            transformOrigin: '0 0',
+            width: '100%',
+            height: '100%',
+            minWidth: '2000px',
+            minHeight: '2000px'
           }}
         >
           {isLoadingItems ? (
-            <div className="absolute top-5 left-5 bg-white p-4 rounded-md shadow-md">
+            <div className="absolute top-5 left-5 bg-white dark:bg-gray-700 p-4 rounded-md shadow-md">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : (
-            items.map((item) => (
-              <PlaygroundItemComponent
-                key={item.id}
-                item={item}
-                onMove={handleItemMove}
-                onDelete={deleteItem}
-                onContentChange={handleContentChange}
-                onRichContentChange={handleRichContentChange}
-                scale={scale}
-                isUpdating={isUpdatingItem || isDeletingItem}
-              />
-            ))
+            <div className="relative">
+              {items.map((item) => (
+                <PlaygroundItemComponent
+                  key={item.id}
+                  item={item}
+                  onMove={handleItemMove}
+                  onDelete={deleteItem}
+                  onContentChange={handleContentChange}
+                  onRichContentChange={handleRichContentChange}
+                  scale={scale}
+                  isUpdating={isUpdatingItem || isDeletingItem}
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>

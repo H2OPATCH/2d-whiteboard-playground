@@ -157,16 +157,16 @@ export default function HomePage() {
       {/* Feature Navigation Cards */}
       <Tabs defaultValue="all" className="mb-10">
         <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-4 bg-transparent">
-          <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary dark:data-[state=active]:text-white">
+          <TabsTrigger value="all" className="data-[state=active]:bg-black data-[state=active]:text-white dark:data-[state=active]:bg-black dark:data-[state=active]:text-white">
             All
           </TabsTrigger>
-          <TabsTrigger value="tasks" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary dark:data-[state=active]:text-white">
+          <TabsTrigger value="tasks" className="data-[state=active]:bg-black data-[state=active]:text-white dark:data-[state=active]:bg-black dark:data-[state=active]:text-white">
             Tasks
           </TabsTrigger>
-          <TabsTrigger value="notes" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary dark:data-[state=active]:text-white">
+          <TabsTrigger value="notes" className="data-[state=active]:bg-black data-[state=active]:text-white dark:data-[state=active]:bg-black dark:data-[state=active]:text-white">
             Notes
           </TabsTrigger>
-          <TabsTrigger value="playground" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary dark:data-[state=active]:text-white">
+          <TabsTrigger value="playground" className="data-[state=active]:bg-black data-[state=active]:text-white dark:data-[state=active]:bg-black dark:data-[state=active]:text-white">
             Playground
           </TabsTrigger>
         </TabsList>
@@ -185,7 +185,7 @@ export default function HomePage() {
                 <p className="text-sm dark:text-gray-300">{tasks.length} tasks total</p>
               </CardContent>
               <CardFooter>
-                <Button variant="ghost" className="w-full dark:text-gray-300 dark:hover:bg-gray-700">
+                <Button variant="outline" className="w-full bg-black text-white hover:bg-gray-800 border-black">
                   <span>View All</span>
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
@@ -204,7 +204,7 @@ export default function HomePage() {
                 <p className="text-sm dark:text-gray-300">{notes.length} notes total</p>
               </CardContent>
               <CardFooter>
-                <Button variant="ghost" className="w-full dark:text-gray-300 dark:hover:bg-gray-700">
+                <Button variant="outline" className="w-full bg-black text-white hover:bg-gray-800 border-black">
                   <span>View All</span>
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
@@ -223,8 +223,8 @@ export default function HomePage() {
                 <p className="text-sm dark:text-gray-300">Visual workspace</p>
               </CardContent>
               <CardFooter>
-                <Button variant="ghost" className="w-full dark:text-gray-300 dark:hover:bg-gray-700">
-                  <span>Open Canvas</span>
+                <Button variant="outline" className="w-full bg-black text-white hover:bg-gray-800 border-black">
+                  <span>View All</span>
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </CardFooter>
@@ -242,7 +242,7 @@ export default function HomePage() {
                 <p className="text-sm dark:text-gray-300">{playgrounds.length} playgrounds total</p>
               </CardContent>
               <CardFooter>
-                <Button variant="ghost" className="w-full dark:text-gray-300 dark:hover:bg-gray-700">
+                <Button variant="outline" className="w-full bg-black text-white hover:bg-gray-800 border-black">
                   <span>View All</span>
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
@@ -255,7 +255,7 @@ export default function HomePage() {
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold dark:text-white">Your Tasks</h2>
-              <Button onClick={() => navigate('/tasks')} className="dark:bg-primary dark:text-white">
+              <Button onClick={() => navigate('/tasks')} className="bg-black text-white hover:bg-gray-800">
                 <Plus className="h-4 w-4 mr-2" /> New Task
               </Button>
             </div>
@@ -287,7 +287,7 @@ export default function HomePage() {
             )}
             {tasks.length > 6 && (
               <div className="text-center mt-4">
-                <Button variant="outline" onClick={() => navigate('/tasks')} className="dark:text-white dark:border-gray-600">
+                <Button variant="outline" onClick={() => navigate('/tasks')} className="bg-black text-white hover:bg-gray-800 border-black">
                   View All Tasks
                 </Button>
               </div>
@@ -299,7 +299,7 @@ export default function HomePage() {
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold dark:text-white">Your Notes</h2>
-              <Button onClick={() => navigate('/notes')} className="dark:bg-primary dark:text-white">
+              <Button onClick={() => navigate('/notes')} className="bg-black text-white hover:bg-gray-800">
                 <Plus className="h-4 w-4 mr-2" /> New Note
               </Button>
             </div>
@@ -330,7 +330,7 @@ export default function HomePage() {
             )}
             {notes.length > 6 && (
               <div className="text-center mt-4">
-                <Button variant="outline" onClick={() => navigate('/notes')} className="dark:text-white dark:border-gray-600">
+                <Button variant="outline" onClick={() => navigate('/notes')} className="bg-black text-white hover:bg-gray-800 border-black">
                   View All Notes
                 </Button>
               </div>
@@ -342,7 +342,7 @@ export default function HomePage() {
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold dark:text-white">Your Playgrounds</h2>
-              <Button onClick={() => navigate('/playground')} className="dark:bg-primary dark:text-white">
+              <Button onClick={() => navigate('/playground')} className="bg-black text-white hover:bg-gray-800">
                 <Plus className="h-4 w-4 mr-2" /> New Playground
               </Button>
             </div>
@@ -372,7 +372,7 @@ export default function HomePage() {
             )}
             {playgrounds.length > 6 && (
               <div className="text-center mt-4">
-                <Button variant="outline" onClick={() => navigate('/playground')} className="dark:text-white dark:border-gray-600">
+                <Button variant="outline" onClick={() => navigate('/playground')} className="bg-black text-white hover:bg-gray-800 border-black">
                   View All Playgrounds
                 </Button>
               </div>
@@ -483,7 +483,7 @@ export default function HomePage() {
             </CardContent>
             {activities.length > 10 && (
               <CardFooter>
-                <Button variant="ghost" className="w-full dark:text-gray-300 dark:hover:bg-gray-700">
+                <Button variant="ghost" className="w-full bg-black text-white hover:bg-gray-800">
                   View All Activity
                 </Button>
               </CardFooter>

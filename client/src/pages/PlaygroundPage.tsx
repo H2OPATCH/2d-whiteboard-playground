@@ -36,11 +36,14 @@ export default function PlaygroundPage() {
   // Create a new playground
   const { mutate: createPlayground, isPending: isCreating } = useMutation({
     mutationFn: async (playgroundData: InsertPlayground) => {
-      const response = await apiRequest("/api/playgrounds", { 
-        method: "POST", 
-        body: playgroundData 
-      });
-      return response as Playground;
+      try {
+        const response = await apiRequest('POST', '/api/playgrounds', playgroundData);
+        const data = await response.json();
+        return data as Playground;
+      } catch (error) {
+        console.error("Playground creation error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Playground created successfully" });
@@ -48,9 +51,10 @@ export default function PlaygroundPage() {
       resetForm();
     },
     onError: (error) => {
+      console.error("Playground creation error:", error);
       toast({ 
         title: "Error", 
-        description: "Failed to create playground", 
+        description: error instanceof Error ? error.message : "Failed to create playground", 
         variant: "destructive" 
       });
     }
@@ -59,11 +63,14 @@ export default function PlaygroundPage() {
   // Update a playground
   const { mutate: updatePlayground, isPending: isUpdating } = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<InsertPlayground> }) => {
-      const response = await apiRequest(`/api/playgrounds/${id}`, { 
-        method: "PATCH", 
-        body: data 
-      });
-      return response as Playground;
+      try {
+        const response = await apiRequest('PATCH', `/api/playgrounds/${id}`, data);
+        const result = await response.json();
+        return result as Playground;
+      } catch (error) {
+        console.error("Playground update error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Playground updated successfully" });
@@ -71,9 +78,10 @@ export default function PlaygroundPage() {
       resetForm();
     },
     onError: (error) => {
+      console.error("Playground update error:", error);
       toast({ 
         title: "Error", 
-        description: "Failed to update playground", 
+        description: error instanceof Error ? error.message : "Failed to update playground", 
         variant: "destructive" 
       });
     }
@@ -82,17 +90,23 @@ export default function PlaygroundPage() {
   // Delete a playground
   const { mutate: deletePlayground, isPending: isDeleting } = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest(`/api/playgrounds/${id}`, { method: "DELETE" });
-      return response as boolean;
+      try {
+        const response = await apiRequest('DELETE', `/api/playgrounds/${id}`);
+        return response.ok;
+      } catch (error) {
+        console.error("Playground deletion error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Playground deleted successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/playgrounds"] });
     },
     onError: (error) => {
+      console.error("Playground deletion error:", error);
       toast({ 
         title: "Error", 
-        description: "Failed to delete playground", 
+        description: error instanceof Error ? error.message : "Failed to delete playground", 
         variant: "destructive" 
       });
     }
@@ -148,15 +162,17 @@ export default function PlaygroundPage() {
         <h1 className="text-2xl font-bold">Playgrounds</h1>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="flex items-center">
+            <Button className="flex items-center bg-black text-white hover:bg-gray-800">
               <Plus className="mr-2 h-4 w-4" />
               New Playground
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="bg-white border border-gray-200 shadow-lg">
             <DialogHeader>
-              <DialogTitle>{isEditing ? "Edit Playground" : "Create New Playground"}</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-xl font-semibold text-gray-900">
+                {isEditing ? "Edit Playground" : "Create New Playground"}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
                 {isEditing 
                   ? "Update your playground details below." 
                   : "Add a new playground to organize your creative ideas."}
@@ -165,23 +181,25 @@ export default function PlaygroundPage() {
             <form onSubmit={handleSubmit}>
               <div className="space-y-4 py-2">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name" className="text-gray-700">Name</Label>
                   <Input 
                     id="name"
                     placeholder="Playground name" 
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
+                    className="bg-white border-gray-300 focus:border-gray-400"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description (optional)</Label>
+                  <Label htmlFor="description" className="text-gray-700">Description (optional)</Label>
                   <Textarea
                     id="description"
                     placeholder="Brief description of this playground"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={3}
+                    className="bg-white border-gray-300 focus:border-gray-400"
                   />
                 </div>
               </div>
@@ -191,13 +209,14 @@ export default function PlaygroundPage() {
                   variant="outline" 
                   onClick={resetForm}
                   disabled={isCreating || isUpdating}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-100"
                 >
                   Cancel
                 </Button>
                 <Button 
                   type="submit"
                   disabled={isCreating || isUpdating || !name.trim()} 
-                  className="ml-2"
+                  className="ml-2 bg-black text-white hover:bg-gray-800"
                 >
                   {(isCreating || isUpdating) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isEditing ? "Update" : "Create"}
