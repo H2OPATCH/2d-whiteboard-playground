@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { useMobile } from "@/hooks/use-mobile";
+import { useTheme } from "@/context/ThemeContext";
 import {
   CheckSquare,
   FileText,
   Lightbulb,
   User,
   Menu,
-  X
+  X,
+  Moon,
+  Sun,
+  Home
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
