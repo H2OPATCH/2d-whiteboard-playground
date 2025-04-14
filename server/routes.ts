@@ -4,7 +4,9 @@ import { storage } from "./storage";
 import { 
   insertTaskSchema, 
   insertNoteSchema, 
-  insertCanvasItemSchema 
+  insertCanvasItemSchema,
+  insertPlaygroundSchema,
+  insertPlaygroundItemSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -227,6 +229,153 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete canvas item" });
+    }
+  });
+
+  // Playground Routes
+  app.get("/api/playgrounds", async (req, res) => {
+    try {
+      const playgrounds = await storage.getPlaygrounds();
+      res.json(playgrounds);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch playgrounds" });
+    }
+  });
+
+  app.get("/api/playgrounds/:id", async (req, res) => {
+    try {
+      const playgroundId = parseInt(req.params.id);
+      const playground = await storage.getPlayground(playgroundId);
+      
+      if (!playground) {
+        return res.status(404).json({ message: "Playground not found" });
+      }
+      
+      res.json(playground);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch playground" });
+    }
+  });
+
+  app.post("/api/playgrounds", async (req, res) => {
+    try {
+      const playgroundData = insertPlaygroundSchema.parse(req.body);
+      const playground = await storage.createPlayground(playgroundData);
+      res.status(201).json(playground);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid playground data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create playground" });
+    }
+  });
+
+  app.patch("/api/playgrounds/:id", async (req, res) => {
+    try {
+      const playgroundId = parseInt(req.params.id);
+      const playgroundData = insertPlaygroundSchema.partial().parse(req.body);
+      
+      const updatedPlayground = await storage.updatePlayground(playgroundId, playgroundData);
+      
+      if (!updatedPlayground) {
+        return res.status(404).json({ message: "Playground not found" });
+      }
+      
+      res.json(updatedPlayground);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid playground data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update playground" });
+    }
+  });
+
+  app.delete("/api/playgrounds/:id", async (req, res) => {
+    try {
+      const playgroundId = parseInt(req.params.id);
+      const success = await storage.deletePlayground(playgroundId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Playground not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete playground" });
+    }
+  });
+
+  // Playground Item Routes
+  app.get("/api/playgrounds/:playgroundId/items", async (req, res) => {
+    try {
+      const playgroundId = parseInt(req.params.playgroundId);
+      const items = await storage.getPlaygroundItems(playgroundId);
+      res.json(items);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch playground items" });
+    }
+  });
+
+  app.get("/api/playground-items/:id", async (req, res) => {
+    try {
+      const itemId = parseInt(req.params.id);
+      const item = await storage.getPlaygroundItem(itemId);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Playground item not found" });
+      }
+      
+      res.json(item);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch playground item" });
+    }
+  });
+
+  app.post("/api/playground-items", async (req, res) => {
+    try {
+      const itemData = insertPlaygroundItemSchema.parse(req.body);
+      const item = await storage.createPlaygroundItem(itemData);
+      res.status(201).json(item);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid playground item data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create playground item" });
+    }
+  });
+
+  app.patch("/api/playground-items/:id", async (req, res) => {
+    try {
+      const itemId = parseInt(req.params.id);
+      const itemData = insertPlaygroundItemSchema.partial().parse(req.body);
+      
+      const updatedItem = await storage.updatePlaygroundItem(itemId, itemData);
+      
+      if (!updatedItem) {
+        return res.status(404).json({ message: "Playground item not found" });
+      }
+      
+      res.json(updatedItem);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid playground item data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update playground item" });
+    }
+  });
+
+  app.delete("/api/playground-items/:id", async (req, res) => {
+    try {
+      const itemId = parseInt(req.params.id);
+      const success = await storage.deletePlaygroundItem(itemId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Playground item not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete playground item" });
     }
   });
 

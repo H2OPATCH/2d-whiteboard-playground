@@ -243,7 +243,9 @@ export class MemStorage implements IStorage {
     const id = this.playgroundId++;
     const playground: Playground = { 
       ...insertPlayground, 
-      id, 
+      id,
+      userId: insertPlayground.userId ?? null,
+      description: insertPlayground.description ?? null,
       updatedAt: new Date() 
     };
     this.playgrounds.set(id, playground);
@@ -292,7 +294,19 @@ export class MemStorage implements IStorage {
 
   async createPlaygroundItem(insertItem: InsertPlaygroundItem): Promise<PlaygroundItem> {
     const id = this.playgroundItemId++;
-    const item: PlaygroundItem = { ...insertItem, id };
+    const item: PlaygroundItem = { 
+      ...insertItem, 
+      id,
+      userId: insertItem.userId ?? null,
+      content: insertItem.content ?? null,
+      richContent: insertItem.richContent ?? null,
+      width: insertItem.width ?? null,
+      height: insertItem.height ?? null,
+      style: insertItem.style ?? null,
+      connectionData: insertItem.connectionData ?? null,
+      mediaUrl: insertItem.mediaUrl ?? null,
+      mediaType: insertItem.mediaType ?? null
+    };
     this.playgroundItems.set(id, item);
     return item;
   }
