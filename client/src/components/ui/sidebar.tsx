@@ -64,27 +64,30 @@ export function Sidebar() {
     setIsOpen(!isOpen);
   };
 
+  useEffect(() => {
+    // Always start with sidebar open for better visibility
+    setIsOpen(true);
+  }, []);
+
   return (
     <>
-      {/* Mobile menu button */}
-      {isMobile && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="fixed top-4 left-4 z-50"
-          onClick={toggleSidebar}
-        >
-          {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </Button>
-      )}
+      {/* Mobile menu button - always visible for better discovery */}
+      <Button
+        variant="outline"
+        size="icon"
+        className="fixed top-4 left-4 z-50 bg-white shadow-md"
+        onClick={toggleSidebar}
+      >
+        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+      </Button>
 
       {/* Sidebar */}
       <div
         className={cn(
-          "w-full md:w-20 lg:w-64 bg-white border-r border-gray-200 flex flex-col z-40",
-          "transition-all duration-300 ease-in-out",
-          isMobile && "fixed inset-y-0 left-0",
-          isMobile && !isOpen && "-translate-x-full"
+          "md:w-64 bg-white border-r border-gray-200 flex flex-col z-40",
+          "transition-all duration-300 ease-in-out shadow-lg",
+          "fixed inset-y-0 left-0",
+          !isOpen && "-translate-x-full"
         )}
       >
         {/* Logo and Navigation */}
@@ -95,6 +98,7 @@ export function Sidebar() {
           </div>
 
           <nav className="flex flex-col w-full mt-4">
+            <h2 className="px-4 py-2 text-sm font-semibold uppercase text-gray-500">Navigation Menu</h2>
             {sidebarItems.map((item) => (
               <Link key={item.path} href={item.path}>
                 <div
@@ -107,10 +111,15 @@ export function Sidebar() {
                   )}
                 >
                   {item.icon}
-                  <span className="ml-3 hidden lg:block">{item.name}</span>
+                  <span className="ml-3 block">{item.name}</span>
                 </div>
               </Link>
             ))}
+            <div className="px-4 py-2 mt-4">
+              <div className="bg-gray-100 rounded-md p-3 text-sm">
+                <p className="font-medium">Tip: Click on any option to navigate</p>
+              </div>
+            </div>
           </nav>
 
           {/* User Profile */}
