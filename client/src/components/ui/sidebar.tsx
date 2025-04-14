@@ -97,7 +97,7 @@ export function Sidebar() {
           <nav className="flex flex-col w-full mt-4">
             {sidebarItems.map((item) => (
               <Link key={item.path} href={item.path}>
-                <a
+                <div
                   className={cn(
                     "flex items-center p-4 w-full text-left hover:bg-gray-100 transition-colors",
                     "border-l-[3px]",
@@ -108,7 +108,7 @@ export function Sidebar() {
                 >
                   {item.icon}
                   <span className="ml-3 hidden lg:block">{item.name}</span>
-                </a>
+                </div>
               </Link>
             ))}
           </nav>
